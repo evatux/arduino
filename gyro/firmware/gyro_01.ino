@@ -41,21 +41,25 @@ void loop(){
     AcZ=(Wire.read()<<8|Wire.read()) + AcYoff;
 
     //read temperature data
-    temp=(Wire.read()<<8|Wire.read()) + toff;
-    tx=temp;
-    t = tx/340 + 36.53;
-    tf = (t * 9/5) + 32;
+//    temp=(Wire.read()<<8|Wire.read()) + toff;
+//    tx=temp;
+//    t = tx/340 + 36.53;
+//    tf = (t * 9/5) + 32;
 
     //read gyro data
-    GyX=(Wire.read()<<8|Wire.read()) + GyXoff;
-    GyY=(Wire.read()<<8|Wire.read()) + GyYoff;
-    GyZ=(Wire.read()<<8|Wire.read()) + GyZoff;
+//    GyX=(Wire.read()<<8|Wire.read()) + GyXoff;
+//    GyY=(Wire.read()<<8|Wire.read()) + GyYoff;
+//    GyZ=(Wire.read()<<8|Wire.read()) + GyZoff;
 
     //get pitch/roll
-    getAngle(AcX,AcY,AcZ);
+//    getAngle(AcX,AcY,AcZ);
 
 #if 1
-    Serial.print(roll);
+    Serial.print(AcX);
+    Serial.print(" ");
+    Serial.print(AcY);
+    Serial.print(" ");
+    Serial.print(AcZ);
     Serial.print("\n");
 #else
     //send the data out the serial port
@@ -82,7 +86,7 @@ void loop(){
     Serial.print("\n\n");
 #endif
 
-    delay(50);
+    delay(5);
 }
 
 //convert the accel data to pitch/roll
