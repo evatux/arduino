@@ -15,6 +15,7 @@ class Tracker:
         self.data = data
 
     def update(self, timeout=0.05):
+        processed = 0
         time_poll_start = time.time()
         time_poll_stop = time_poll_start + timeout
         while True:
@@ -27,9 +28,11 @@ class Tracker:
                 line = self.fd.readline()
                 if line:
                     self.parse_line(line, time.time())
+                    processed += 1
                 else:
                     print('select return eof')
                     sys.exit(0)
+        return processed
 
     def parse_line(self, line, time_stamp):
         parsed = False
