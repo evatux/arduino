@@ -25,13 +25,15 @@ class Tracker:
 
             while self.fd in \
                     select.select([self.fd], [], [], time_poll_timeout)[0]:
-                line = self.fd.readline()
-                if line:
-                    self.parse_line(line, time.time())
-                    processed += 1
-                else:
-                    print('select return eof')
-                    sys.exit(0)
+                try:
+                    line = self.fd.readline()
+                    if line:
+                        processed += self.parse_line(line, time.time())
+                    else:
+                        print('select return eof')
+                        sys.exit(0)
+                except:
+                    pass
         return processed
 
     def parse_line(self, line, time_stamp):
@@ -50,6 +52,7 @@ class Tracker:
             self.data['time'] = numpy.append(self.data['time'], t)
         if not parsed:
             print("@@@ skip line: ", line)
+        return parsed
 
 
 def main():

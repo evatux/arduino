@@ -13,6 +13,7 @@ def gen_numbers(time_start, time_stop, dt):
         t = time_start + i * dt
         vals = (math.sin(0.1 * t), math.cos(0.2 * t + 0.1), 0.5)
         print("%.2f  %.2f  %.2f" % vals, flush=True)
+        # print("%.2f  %.2f  %.2f" % (-0.1, -0.15, -0.9), flush=True)
 
 def gen(sleep_min=0.5, sleep_max=4, dt=0.2):
     last_time = 0

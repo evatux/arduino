@@ -9,6 +9,7 @@ from pyrr import matrix44
 import moderngl_window as mglw
 
 import core
+import math_utils
 
 class Line:
     def __init__(self, ctx, y, color=(1.0, 1.0, 1.0)):
@@ -79,7 +80,8 @@ class Points:
     def add(self):
         old_data_size = self.byte_size
 
-        new_len = len(self.raw_data['time'])
+        new_len = min(len(self.raw_data['time']),
+                len(self.raw_data[self.what][self.idx]))
         new = numpy.stack(
                 (
                     self.raw_data['time'][self.last_offset : new_len],
@@ -103,8 +105,8 @@ class Points:
 class GrowingBuffers(mglw.WindowConfig):
     gl_version = (3, 3)
     title = "Buffer Resize / Batch Draw"
-    window_size = 1000, 1000
-    aspect_ratio = 1.0
+    window_size = 1900, 1000
+    aspect_ratio = 2.0
     resizable = True
     samples = 2
 
@@ -118,30 +120,52 @@ class GrowingBuffers(mglw.WindowConfig):
         }
         self.tracker = core.Tracker(self.data, n_inputs=self.n_inputs)
         self.points = (
-                Points(self.ctx, self.data, 'proc', 0, color=(1., 0., 0.)),
-                Points(self.ctx, self.data, 'proc', 1, color=(0., 1., 0.)),
-                Points(self.ctx, self.data, 'proc', 2, color=(0., 0., 1.)),
+                Points(self.ctx, self.data, 'proc', 0, color=(0., 1., 0.)),
+                # Points(self.ctx, self.data, 'proc', 1, color=(0., 0., 1.)),
+                Points(self.ctx, self.data, 'proc', 2, color=(1., 0., 0.)),
                 )
         self.lines = (
                 Line(self.ctx, -1., color=(1., 1., 1.)),
                 Line(self.ctx, 0., color=(1., 1., 1.)),
                 Line(self.ctx, 1., color=(1., 1., 1.)),
                 )
+        self.norm = numpy.array([10., ] + [1., ] * 2)
+        self.norm /= self.norm.sum()
+
+        self.v = numpy.array([0., 0., -1.])
+        self.compute_Q()
 
     @classmethod
     def run(cls):
         mglw.run_window_config(cls)
 
+    def key_event(self, key, action, modifiers):
+        keys = self.wnd.keys
+        if action == keys.ACTION_PRESS:
+            if key == keys.N:
+                self.compute_Q()
+
+    def compute_Q(self):
+        self.Q = math_utils.find_Q(self.v)
+
     def post_process(self, processed):
-        n_start = len(self.data['time']) - processed
+        n_end = len(self.data['raw'][self.n_inputs - 1])
+        n_start = n_end - processed
         for p in range(n_start, n_start + processed):
-            l2 = math.sqrt(0
-                    + self.data['raw'][0][p] * self.data['raw'][0][p]
-                    + self.data['raw'][1][p] * self.data['raw'][1][p]
-                    + self.data['raw'][2][p] * self.data['raw'][2][p])
-            for i in range(self.n_inputs):
-                self.data['proc'][i] = numpy.append(self.data['proc'][i],
-                        self.data['raw'][i][p] / l2)
+            v = numpy.array([
+                    [self.data['raw'][i][max(p - j, 0)] for j in range(len(self.norm))]
+                    for i in range(self.n_inputs)
+                ])
+            v = v.dot(self.norm)
+            v /= math.sqrt(v.dot(v))
+            self.v = v
+
+            v = self.Q.dot(v)
+
+            self.data['proc'][0] = numpy.append(self.data['proc'][0],
+                    math.sqrt(v[0] * v[0] + v[1] * v[1]))
+            # self.data['proc'][1] = numpy.append(self.data['proc'][1], v[1])
+            self.data['proc'][2] = numpy.append(self.data['proc'][2], v[2])
 
     def render(self, time_now, frametime):
         processed = self.tracker.update(timeout=0.01)
