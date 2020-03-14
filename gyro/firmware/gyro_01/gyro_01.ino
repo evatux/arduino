@@ -5,7 +5,13 @@ int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
 double pitch,roll;
 
 void setup(){
+    // nodeMCU: SDA/SCL pins: D2/D1
+    // nano: SDA/SCL pins: A4/A5
+#ifdef ARDUINO_ARCH_ESP8266
+    Wire.begin(4, 5);
+#else
     Wire.begin();
+#endif
     Wire.beginTransmission(MPU);
     Wire.write(0x6B);
     Wire.write(0);
